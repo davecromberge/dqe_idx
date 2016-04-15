@@ -1,7 +1,7 @@
 -module(dqe_idx).
 
 %% API exports
--export([lookup/1, add/6, delete/6, expand/1]).
+-export([lookup/1, expand/2, add/6, delete/6]).
 
 -type bucket() :: binary().
 -type collection() :: binary().
@@ -16,14 +16,13 @@
                  {'or', where(), where()}.
 -type lqry() :: {collection(), metric()} |
                 {collection(), metric(), where()}.
--type eqry() :: {bucket(), [glob_metric()]}.
 
 -callback lookup(lqry()) ->
     {ok, [{bucket(), key()}]} |
     {error, Error::term()}.
 
--callback expand(glob_metric()) ->
-    {ok, [{bucket(), [metric()]}]} |
+-callback expand(bucket(), [glob_metric()]) ->
+    {ok, {bucket(), [metric()]}} |
     {error, Error::term()}.
 
 -callback add(Collection::collection(),
@@ -55,12 +54,12 @@ lookup(Query) ->
     Mod = idx_module(),
     Mod:lookup(Query).
 
--spec expand(eqry()) ->
-                    {ok, [{bucket(), key()}]} |
+-spec expand(bucket(), [glob_metric()]) ->
+                    {ok, {bucket(), [metric()]}} |
                     {error, Error::term()}.
-expand(Query) ->
+expand(B, Gs) ->
     Mod = idx_module(),
-    Mod:expand(Query).
+    Mod:expand(B, Gs).
 
 -spec add(Collection::collection(),
           Metric::metric(),
@@ -68,7 +67,8 @@ expand(Query) ->
           Key::key(),
           TagName::tag_name(),
           TagValue::tag_value()) ->
-                 {ok, {MetricIdx::non_neg_integer(), TagIdx::non_neg_integer()}}|
+                 {ok, {MetricIdx::non_neg_integer(),
+                       TagIdx::non_neg_integer()}}|
                  {error, Error::term()}.
 
 add(Collection, Metric, Bucket, Key, TagName, TagValue) ->
@@ -81,12 +81,13 @@ add(Collection, Metric, Bucket, Key, TagName, TagValue) ->
              Key::key(),
              TagName::tag_name(),
              TagValue::tag_value()) ->
-                    {ok, {MetricIdx::non_neg_integer(), TagIdx::non_neg_integer()}}|
+                    {ok, {MetricIdx::non_neg_integer(),
+                          TagIdx::non_neg_integer()}}|
                     {error, Error::term()}.
 
 delete(Collection, Metric, Bucket, Key, TagName, TagValue) ->
     Mod = idx_module(),
-    Mod:add(Collection, Metric, Bucket, Key, TagName, TagValue).
+    Mod:delete(Collection, Metric, Bucket, Key, TagName, TagValue).
 
 %%====================================================================
 %% Internal functions
