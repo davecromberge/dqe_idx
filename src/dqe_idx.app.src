@@ -1,15 +1,10 @@
-{application, dqe_idx,
- [{description, "Dalmatiner QE indexing"},
-  {vsn, "0.1.0"},
-  {registered, []},
-  {applications,
-   [kernel,
-    stdlib
-   ]},
-  {env,[]},
-  {modules, []},
-
-  {maintainers, ["Heinz N. Gies"]},
-  {licenses, ["MIT"]},
-  {links, []}
- ]}.
+{application,dqe_idx,
+             [{description,"Dalmatiner QE indexing"},
+              {vsn,"0.1.1"},
+              {registered,[]},
+              {applications,[kernel,stdlib]},
+              {env,[]},
+              {modules,[]},
+              {maintainers,["Heinz N. Gies"]},
+              {licenses,["MIT"]},
+              {links,[]}]}.
