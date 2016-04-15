@@ -1,5 +1,5 @@
 {application, dqe_idx,
- [{description, "An OTP library"},
+ [{description, "Dalmatiner QE indexing"},
   {vsn, "0.1.0"},
   {registered, []},
   {applications,
@@ -9,7 +9,7 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
-  {licenses, []},
+  {maintainers, ["Heinz N. Gies"]},
+  {licenses, ["MIT"]},
   {links, []}
  ]}.
