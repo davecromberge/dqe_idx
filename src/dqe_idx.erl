@@ -4,41 +4,42 @@
 -export([lookup/1, add/6, delete/6, expand/1]).
 
 -type bucket() :: binary().
+-type collection() :: binary().
 -type metric() :: binary().
--type token_metric() :: [binary()].
+-type key() :: binary().
 -type glob_metric() :: [binary() | '*'].
--type tag_key() :: binary().
+-type tag_name() :: binary().
 -type tag_value() :: binary().
 
--type where() :: {tag_key(), tag_value()} |
+-type where() :: {tag_name(), tag_value()} |
                  {'and', where(), where()} |
                  {'or', where(), where()}.
--type lqry() :: {bucket(), token_metric()} |
-                {bucket(), token_metric(), where()}.
--type eqry() :: [{bucket(), [token_metric()]}].
+-type lqry() :: {collection(), metric()} |
+                {collection(), metric(), where()}.
+-type eqry() :: {bucket(), [glob_metric()]}.
 
 -callback lookup(lqry()) ->
-    {ok, [{bucket(), metric()}]} |
+    {ok, [{bucket(), key()}]} |
     {error, Error::term()}.
 
 -callback expand(glob_metric()) ->
     {ok, [{bucket(), [metric()]}]} |
     {error, Error::term()}.
 
--callback add(Bucket::bucket(),
-              Metric::token_metric(),
-              LookupBucket::binary(),
-              LookupMetric::binary(),
-              TagKey::tag_key(),
+-callback add(Collection::collection(),
+              Metric::metric(),
+              Bucket::bucket(),
+              Key::key(),
+              TagName::tag_name(),
               TagValue::tag_value()) ->
     {ok, {MetricIdx::non_neg_integer(), TagIdx::non_neg_integer()}}|
     {error, Error::term()}.
 
--callback delete(Bucket::bucket(),
-                 Metric::token_metric(),
-                 LookupBucket::binary(),
-                 LookupMetric::binary(),
-                 TagKey::tag_key(),
+-callback delete(Collection::collection(),
+                 Metric::metric(),
+                 Bucket::bucket(),
+                 Key::key(),
+                 TagName::tag_name(),
                  TagValue::tag_value()) ->
     ok |
     {error, Error::term()}.
@@ -48,44 +49,44 @@
 %%====================================================================
 
 -spec lookup(lqry()) ->
-                    {ok, [{binary(), binary()}]} |
+                    {ok, [{bucket(), key()}]} |
                     {error, Error::term()}.
 lookup(Query) ->
     Mod = idx_module(),
     Mod:lookup(Query).
 
--spec expand(glob_metric()) ->
-                    {ok, [{bucket(), [metric()]}]} |
+-spec expand(eqry()) ->
+                    {ok, [{bucket(), key()}]} |
                     {error, Error::term()}.
 expand(Query) ->
     Mod = idx_module(),
     Mod:expand(Query).
 
--spec add(Bucket::binary(),
-          Metric::[binary()],
-          LookupBucket::binary(),
-          LookupMetric::binary(),
-          TagKey::tag_key(),
+-spec add(Collection::collection(),
+          Metric::metric(),
+          Bucket::bucket(),
+          Key::key(),
+          TagName::tag_name(),
           TagValue::tag_value()) ->
-    {ok, {MetricIdx::non_neg_integer(), TagIdx::non_neg_integer()}}|
-    {error, Error::term()}.
+                 {ok, {MetricIdx::non_neg_integer(), TagIdx::non_neg_integer()}}|
+                 {error, Error::term()}.
 
-add(Bucket, Metric, LookupBucket, LookupMetric, TagKey, TagValue) ->
+add(Collection, Metric, Bucket, Key, TagName, TagValue) ->
     Mod = idx_module(),
-    Mod:add(Bucket, Metric, LookupBucket, LookupMetric, TagKey, TagValue).
+    Mod:add(Collection, Metric, Bucket, Key, TagName, TagValue).
 
--spec delete(Bucket::binary(),
-             Metric::[binary()],
-             LookupBucket::binary(),
-             LookupMetric::binary(),
-             TagKey::tag_key(),
+-spec delete(Collection::collection(),
+             Metric::metric(),
+             Bucket::bucket(),
+             Key::key(),
+             TagName::tag_name(),
              TagValue::tag_value()) ->
-    ok |
-    {error, Error::term()}.
+                    {ok, {MetricIdx::non_neg_integer(), TagIdx::non_neg_integer()}}|
+                    {error, Error::term()}.
 
-delete(Bucket, Metric, LookupBucket, LookupMetric, TagKey, TagValue) ->
+delete(Collection, Metric, Bucket, Key, TagName, TagValue) ->
     Mod = idx_module(),
-    Mod:delete(Bucket, Metric, LookupBucket, LookupMetric, TagKey, TagValue).
+    Mod:add(Collection, Metric, Bucket, Key, TagName, TagValue).
 
 %%====================================================================
 %% Internal functions
