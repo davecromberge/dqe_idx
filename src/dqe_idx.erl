@@ -1,3 +1,12 @@
+%%%-------------------------------------------------------------------
+%%% @copyright (C) 2016, Project-FiFo UG
+%%% @doc
+%%% Call back module and wrapper for the Dalmatiner Query Engine
+%%% Indexer. This module should be used in place of calling
+%%% different indexer backends.
+%%% @end
+%%% Created : 16 Apr 2016 by Heinz Nikolaus Gies <heinz@licenser.net>
+%%%-------------------------------------------------------------------
 -module(dqe_idx).
 
 %% API exports
@@ -16,6 +25,7 @@
 -type where() :: {tag_name(), tag_value()} |
                  {'and', where(), where()} |
                  {'or', where(), where()}.
+
 -type lqry() :: {collection(), metric()} |
                 {collection(), metric(), where()}.
 
@@ -39,8 +49,7 @@
               Metric::metric(),
               Bucket::bucket(),
               Key::key()) ->
-    {ok, {MetricIdx::non_neg_integer(),
-          TagIdx::non_neg_integer()}}|
+    {ok, MetricIdx::term()}|
     {error, Error::term()}.
 
 -callback add(Collection::collection(),
@@ -48,35 +57,30 @@
               Bucket::bucket(),
               Key::key(),
               Tags::[{tag_name(), tag_value()}]) ->
-    {ok, {MetricIdx::non_neg_integer(),
-          TagIdx::non_neg_integer()}}|
+    {ok, MetricIdx::term()}|
     {error, Error::term()}.
+
 -callback add(Collection::collection(),
               Metric::metric(),
               Bucket::bucket(),
               Key::key(),
               TagName::tag_name(),
               TagValue::tag_value()) ->
-    {ok, {MetricIdx::non_neg_integer(), TagIdx::non_neg_integer()}}|
+    {ok, MetricIdx::term()}|
     {error, Error::term()}.
 
 -callback delete(Collection::collection(),
                  Metric::metric(),
                  Bucket::bucket(),
                  Key::key()) ->
-    {ok, {MetricIdx::non_neg_integer(),
-          TagIdx::non_neg_integer()}}|
-    {error, Error::term()}.
-
+    ok | {error, Error::term()}.
 
 -callback delete(Collection::collection(),
                  Metric::metric(),
                  Bucket::bucket(),
                  Key::key(),
                  Tags::[{tag_name(), tag_value()}]) ->
-    {ok, {MetricIdx::non_neg_integer(),
-          TagIdx::non_neg_integer()}}|
-    {error, Error::term()}.
+    ok | {error, Error::term()}.
 
 -callback delete(Collection::collection(),
                  Metric::metric(),
@@ -84,16 +88,30 @@
                  Key::key(),
                  TagName::tag_name(),
                  TagValue::tag_value()) ->
-    ok |
-    {error, Error::term()}.
+    ok | {error, Error::term()}.
 
 %%====================================================================
 %% API functions
 %%====================================================================
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Initializes the Dalmatiner Query Engine indexer, this will hand
+%% down to whatever indexing backend is used.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec init() -> ok | {error, Error::term()}.
 init() ->
     Mod = idx_module(),
     Mod:init().
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Takes a lookup query and reutrns a list of all metric/bucket
+%% paris that metch the lookup criteria.
+%% @end
+%%--------------------------------------------------------------------
 
 -spec lookup(lqry()) ->
                     {ok, [{bucket(), key()}]} |
@@ -102,6 +120,13 @@ lookup(Query) ->
     Mod = idx_module(),
     Mod:lookup(Query).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Expands a glob into all matching metrics for a given bucket.
+%% WARNING: This might go away!
+%% @end
+%%--------------------------------------------------------------------
+
 -spec expand(bucket(), [glob_metric()]) ->
                     {ok, {bucket(), [metric()]}} |
                     {error, Error::term()}.
@@ -109,30 +134,48 @@ expand(B, Gs) ->
     Mod = idx_module(),
     Mod:expand(B, Gs).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Links a collection/metric to a bucket and key. Returns whatever
+%% identifyer the colleciton/metric has if any.
+%% @end
+%%--------------------------------------------------------------------
+
 -spec add(Collection::collection(),
           Metric::metric(),
           Bucket::bucket(),
           Key::key()) ->
-                 {ok, {MetricIdx::non_neg_integer(),
-                       TagIdx::non_neg_integer()}}|
+                 {ok, MetricIdx::term()} |
                  {error, Error::term()}.
 
 add(Collection, Metric, Bucket, Key) ->
     Mod = idx_module(),
     Mod:add(Collection, Metric, Bucket, Key).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Adds one or more metrics tag pairs to a metric. This function
+%% might call add/6 repeatively or use a more optimized method.
+%% @end
+%%--------------------------------------------------------------------
+
 -spec add(Collection::collection(),
           Metric::metric(),
           Bucket::bucket(),
           Key::key(),
           Tags::[{tag_name(), tag_value()}]) ->
-                 {ok, {MetricIdx::non_neg_integer(),
-                       TagIdx::non_neg_integer()}}|
+                 {ok, MetricIdx::term()} |
                  {error, Error::term()}.
 
 add(Collection, Metric, Bucket, Key, Tags) ->
     Mod = idx_module(),
     Mod:add(Collection, Metric, Bucket, Key, Tags).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Adds a tag pair to a metrics.
+%% @end
+%%--------------------------------------------------------------------
 
 -spec add(Collection::collection(),
           Metric::metric(),
@@ -140,38 +183,53 @@ add(Collection, Metric, Bucket, Key, Tags) ->
           Key::key(),
           TagName::tag_name(),
           TagValue::tag_value()) ->
-                 {ok, {MetricIdx::non_neg_integer(),
-                       TagIdx::non_neg_integer()}}|
+                 {ok, MetricIdx::term()} |
                  {error, Error::term()}.
 
 add(Collection, Metric, Bucket, Key, TagName, TagValue) ->
     Mod = idx_module(),
     Mod:add(Collection, Metric, Bucket, Key, TagName, TagValue).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Deletes a Collection/Metric pair and all it's tags.
+%% @end
+%%--------------------------------------------------------------------
+
 -spec delete(Collection::collection(),
              Metric::metric(),
              Bucket::bucket(),
              Key::key()) ->
-                    {ok, {MetricIdx::non_neg_integer(),
-                          TagIdx::non_neg_integer()}}|
+                    ok |
                     {error, Error::term()}.
 
 delete(Collection, Metric, Bucket, Key) ->
     Mod = idx_module(),
     Mod:delete(Collection, Metric, Bucket, Key).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Deletes one or more Tag pairs from a Metric. This funciton can
+%% call delete/6 multiple times or use a more optimized method.
+%% @end
+%%--------------------------------------------------------------------
 -spec delete(Collection::collection(),
              Metric::metric(),
              Bucket::bucket(),
              Key::key(),
              Tags::[{tag_name(), tag_value()}]) ->
-                    {ok, {MetricIdx::non_neg_integer(),
-                          TagIdx::non_neg_integer()}}|
+                    ok |
                     {error, Error::term()}.
 
 delete(Collection, Metric, Bucket, Key, Tags) ->
     Mod = idx_module(),
     Mod:delete(Collection, Metric, Bucket, Key, Tags).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Deletes a Tag pairs from a Metric.
+%% @end
+%%--------------------------------------------------------------------
 
 -spec delete(Collection::collection(),
              Metric::metric(),
@@ -179,8 +237,7 @@ delete(Collection, Metric, Bucket, Key, Tags) ->
              Key::key(),
              TagName::tag_name(),
              TagValue::tag_value()) ->
-                    {ok, {MetricIdx::non_neg_integer(),
-                          TagIdx::non_neg_integer()}}|
+                    ok |
                     {error, Error::term()}.
 
 delete(Collection, Metric, Bucket, Key, TagName, TagValue) ->
