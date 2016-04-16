@@ -1,6 +1,6 @@
 {application,dqe_idx,
              [{description,"Dalmatiner QE indexing"},
-              {vsn,"0.1.5"},
+              {vsn,"0.1.6"},
               {registered,[]},
               {applications,[kernel,stdlib]},
               {env,[]},

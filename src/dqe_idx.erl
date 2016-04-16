@@ -1,7 +1,7 @@
 -module(dqe_idx).
 
 %% API exports
--export([lookup/1, expand/2,
+-export([lookup/1, expand/2, init/0,
          add/4, add/5, add/6,
          delete/4, delete/5, delete/6]).
 
