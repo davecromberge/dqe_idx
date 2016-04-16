@@ -23,6 +23,10 @@
               glob_metric/0, tag_name/0, tag_value/0,
               where/0, lqry/0]).
 
+-callback init() ->
+    ok |
+    {error, Error::term()}.
+
 -callback lookup(lqry()) ->
     {ok, [{bucket(), key()}]} |
     {error, Error::term()}.
@@ -86,6 +90,10 @@
 %%====================================================================
 %% API functions
 %%====================================================================
+
+init() ->
+    Mod = idx_module(),
+    Mod:init().
 
 -spec lookup(lqry()) ->
                     {ok, [{bucket(), key()}]} |
@@ -183,4 +191,4 @@ delete(Collection, Metric, Bucket, Key, TagName, TagValue) ->
 %% Internal functions
 %%====================================================================
 idx_module() ->
-    application:get_env(dqe, lookup_module, dqe_idx_ddb).
+    application:get_env(dqe_idx, lookup_module, dqe_idx_ddb).
