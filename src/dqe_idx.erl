@@ -11,8 +11,8 @@
 
 %% API exports
 -export([lookup/1, expand/2, init/0,
-         add/5, add/6, add/7,
-         delete/5, delete/6, delete/7]).
+         add/4, add/5, add/7,
+         delete/4, delete/5, delete/7]).
 
 -type bucket() :: binary().
 -type collection() :: binary().
@@ -50,8 +50,6 @@
     {error, Error::term()}.
 
 -callback add(Collection::collection(),
-              Namespace::namespace(),
-
               Metric::metric(),
               Bucket::bucket(),
               Key::key()) ->
@@ -59,44 +57,41 @@
     {error, Error::term()}.
 
 -callback add(Collection::collection(),
-              Namespace::namespace(),
               Metric::metric(),
               Bucket::bucket(),
               Key::key(),
-              Tags::[{tag_name(), tag_value()}]) ->
+              Tags::[{namespace(), tag_name(), tag_value()}]) ->
     {ok, MetricIdx::term()}|
     {error, Error::term()}.
 
 -callback add(Collection::collection(),
-              Namespace::namespace(),
               Metric::metric(),
               Bucket::bucket(),
               Key::key(),
+              Namespace::namespace(),
               TagName::tag_name(),
               TagValue::tag_value()) ->
     {ok, MetricIdx::term()}|
     {error, Error::term()}.
 
 -callback delete(Collection::collection(),
-                 Namespace::namespace(),
                  Metric::metric(),
                  Bucket::bucket(),
                  Key::key()) ->
     ok | {error, Error::term()}.
 
 -callback delete(Collection::collection(),
-                 Namespace::namespace(),
                  Metric::metric(),
                  Bucket::bucket(),
                  Key::key(),
-                 Tags::[{tag_name(), tag_value()}]) ->
+                 Tags::[{namespace(), tag_name(), tag_value()}]) ->
     ok | {error, Error::term()}.
 
 -callback delete(Collection::collection(),
-                 Namespace::namespace(),
                  Metric::metric(),
                  Bucket::bucket(),
                  Key::key(),
+                 Namespace::namespace(),
                  TagName::tag_name(),
                  TagValue::tag_value()) ->
     ok | {error, Error::term()}.
@@ -153,16 +148,15 @@ expand(B, Gs) ->
 %%--------------------------------------------------------------------
 
 -spec add(Collection::collection(),
-          Namespace::namespace(),
           Metric::metric(),
           Bucket::bucket(),
           Key::key()) ->
                  {ok, MetricIdx::term()} |
                  {error, Error::term()}.
 
-add(Collection, Namespace, Metric, Bucket, Key) ->
+add(Collection, Metric, Bucket, Key) ->
     Mod = idx_module(),
-    Mod:add(Collection, Namespace, Metric, Bucket, Key).
+    Mod:add(Collection, Metric, Bucket, Key).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -172,17 +166,16 @@ add(Collection, Namespace, Metric, Bucket, Key) ->
 %%--------------------------------------------------------------------
 
 -spec add(Collection::collection(),
-          Namespace::namespace(),
           Metric::metric(),
           Bucket::bucket(),
           Key::key(),
-          Tags::[{tag_name(), tag_value()}]) ->
+          Tags::[{namespace(), tag_name(), tag_value()}]) ->
                  {ok, MetricIdx::term()} |
                  {error, Error::term()}.
 
-add(Collection, Namespace, Metric, Bucket, Key, Tags) ->
+add(Collection, Metric, Bucket, Key, Tags) ->
     Mod = idx_module(),
-    Mod:add(Collection, Namespace, Metric, Bucket, Key, Tags).
+    Mod:add(Collection, Metric, Bucket, Key, Tags).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -191,18 +184,18 @@ add(Collection, Namespace, Metric, Bucket, Key, Tags) ->
 %%--------------------------------------------------------------------
 
 -spec add(Collection::collection(),
-          Namespace::namespace(),
           Metric::metric(),
           Bucket::bucket(),
           Key::key(),
+          Namespace::namespace(),
           TagName::tag_name(),
           TagValue::tag_value()) ->
                  {ok, MetricIdx::term()} |
                  {error, Error::term()}.
 
-add(Collection, Namespace, Metric, Bucket, Key, TagName, TagValue) ->
+add(Collection, Metric, Bucket, Key, Namespace, TagName, TagValue) ->
     Mod = idx_module(),
-    Mod:add(Collection, Namespace, Metric, Bucket, Key, TagName, TagValue).
+    Mod:add(Collection, Metric, Bucket, Key, Namespace, TagName, TagValue).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -211,16 +204,15 @@ add(Collection, Namespace, Metric, Bucket, Key, TagName, TagValue) ->
 %%--------------------------------------------------------------------
 
 -spec delete(Collection::collection(),
-             Namespace::namespace(),
              Metric::metric(),
              Bucket::bucket(),
              Key::key()) ->
                     ok |
                     {error, Error::term()}.
 
-delete(Collection, Namespace, Metric, Bucket, Key) ->
+delete(Collection, Metric, Bucket, Key) ->
     Mod = idx_module(),
-    Mod:delete(Collection, Namespace, Metric, Bucket, Key).
+    Mod:delete(Collection, Metric, Bucket, Key).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -229,17 +221,16 @@ delete(Collection, Namespace, Metric, Bucket, Key) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec delete(Collection::collection(),
-             Namespace::namespace(),
              Metric::metric(),
              Bucket::bucket(),
              Key::key(),
-             Tags::[{tag_name(), tag_value()}]) ->
+             Tags::[{namespace(), tag_name(), tag_value()}]) ->
                     ok |
                     {error, Error::term()}.
 
-delete(Collection, Namespace, Metric, Bucket, Key, Tags) ->
+delete(Collection, Metric, Bucket, Key, Tags) ->
     Mod = idx_module(),
-    Mod:delete(Collection, Namespace, Metric, Bucket, Key, Tags).
+    Mod:delete(Collection, Metric, Bucket, Key, Tags).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -248,18 +239,18 @@ delete(Collection, Namespace, Metric, Bucket, Key, Tags) ->
 %%--------------------------------------------------------------------
 
 -spec delete(Collection::collection(),
-             Namespace::namespace(),
              Metric::metric(),
              Bucket::bucket(),
              Key::key(),
+             Namespace::namespace(),
              TagName::tag_name(),
              TagValue::tag_value()) ->
                     ok |
                     {error, Error::term()}.
 
-delete(Collection, Namespace, Metric, Bucket, Key, TagName, TagValue) ->
+delete(Collection, Metric, Bucket, Key, Namespace, TagName, TagValue) ->
     Mod = idx_module(),
-    Mod:delete(Collection, Namespace, Metric, Bucket, Key, TagName, TagValue).
+    Mod:delete(Collection, Metric, Bucket, Key, Namespace, TagName, TagValue).
 
 %%====================================================================
 %% Internal functions
