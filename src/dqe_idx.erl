@@ -202,7 +202,7 @@ add(Collection, Namespace, Metric, Bucket, Key, Tags) ->
 
 add(Collection, Namespace, Metric, Bucket, Key, TagName, TagValue) ->
     Mod = idx_module(),
-    Mod:add(Collection, Metric, Bucket, Key, TagName, TagValue).
+    Mod:add(Collection, Namespace, Metric, Bucket, Key, TagName, TagValue).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -220,7 +220,7 @@ add(Collection, Namespace, Metric, Bucket, Key, TagName, TagValue) ->
 
 delete(Collection, Namespace, Metric, Bucket, Key) ->
     Mod = idx_module(),
-    Mod:delete(Collection, Metric, Bucket, Key).
+    Mod:delete(Collection, Namespace, Metric, Bucket, Key).
 
 %%--------------------------------------------------------------------
 %% @doc
