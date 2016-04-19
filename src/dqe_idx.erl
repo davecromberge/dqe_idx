@@ -19,15 +19,19 @@
 -type metric() :: binary().
 -type key() :: binary().
 -type glob_metric() :: [binary() | '*'].
+-type namespace() :: binary().
 -type tag_name() :: binary().
+-type tag() :: {tag, Namespace::namespace(), TagName::tag_name()}.
 -type tag_value() :: binary().
 
--type where() :: {tag_name(), tag_value()} |
+
+
+-type where() :: {'=',  tag(), tag_value()} |
                  {'and', where(), where()} |
                  {'or', where(), where()}.
 
--type lqry() :: {collection(), [metric()]} |
-                {collection(), [metric()], where()}.
+-type lqry() :: {in, collection(), [metric()]} |
+                {in, collection(), [metric()], where()}.
 
 -export_type([bucket/0, collection/0, metric/0, key/0,
               glob_metric/0, tag_name/0, tag_value/0,
