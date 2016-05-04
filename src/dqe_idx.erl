@@ -10,7 +10,10 @@
 -module(dqe_idx).
 
 %% API exports
--export([lookup/1, expand/2, init/0,
+-export([init/0,
+         lookup/1, lookup_tags/1,
+         collections/0, metrics/1, namespaces/2, tags/3,
+         expand/2,
          add/4, add/5, add/7,
          delete/4, delete/5, delete/7]).
 
@@ -23,7 +26,8 @@
 -type tag_name() :: binary().
 -type tag() :: {tag, Namespace::namespace(), TagName::tag_name()}.
 -type tag_value() :: binary().
-
+-type tags() :: [{Namespace::namespace(), TagName::tag_name(),
+                  Value::tag_value()}].
 
 
 -type where() :: {'=',  tag(), tag_value()} |
@@ -43,6 +47,27 @@
 
 -callback lookup(lqry()) ->
     {ok, [{bucket(), key()}]} |
+    {error, Error::term()}.
+
+-callback lookup_tags(lqry()) ->
+    {ok, tags()} |
+    {error, Error::term()}.
+
+-callback collections() ->
+    {ok, [collection()]} |
+    {error, Error::term()}.
+
+-callback metrics(Collection::collection()) ->
+    {ok, [metric()]} |
+    {error, Error::term()}.
+
+-callback namespaces(Collection::collection(), Metric::metric()) ->
+    {ok, [namespace()]} |
+    {error, Error::term()}.
+
+-callback tags(Collection::collection(), Metric::metric(),
+               Namespace::namespace()) ->
+    {ok, [tag_name()]} |
     {error, Error::term()}.
 
 -callback expand(bucket(), [glob_metric()]) ->
@@ -125,6 +150,74 @@ init() ->
 lookup(Query) ->
     Mod = idx_module(),
     Mod:lookup(Query).
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Find all possible namespace, tag, value pairs for a query.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec lookup_tags(lqry()) ->
+                         {ok, tags()} |
+                         {error, Error::term()}.
+lookup_tags(Query) ->
+    Mod = idx_module(),
+    Mod:lookup_tags(Query).
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all collections.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec collections() ->
+                         {ok, [collection()]} |
+                         {error, Error::term()}.
+collections() ->
+    Mod = idx_module(),
+    Mod:collections().
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all metrics in a collections.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec metrics(Collection::collection()) ->
+                         {ok, [metric()]} |
+                         {error, Error::term()}.
+metrics(Collection) ->
+    Mod = idx_module(),
+    Mod:metrics(Collection).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all namespaces for a metrics.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec namespaces(Collection::collection(), Metric::metric()) ->
+                         {ok, [namespace()]} |
+                         {error, Error::term()}.
+namespaces(Collection, Metric) ->
+    Mod = idx_module(),
+    Mod:namespaces(Collection, Metric).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all tags for a namespaces metrics.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec tags(Collection::collection(), Metric::metric(),
+           Namesplace::namespace()) ->
+                  {ok, [tag_name()]} |
+                  {error, Error::term()}.
+tags(Collection, Metric, Namespace) ->
+    Mod = idx_module(),
+    Mod:tags(Collection, Metric, Namespace).
 
 %%--------------------------------------------------------------------
 %% @doc
