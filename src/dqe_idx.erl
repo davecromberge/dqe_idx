@@ -11,7 +11,7 @@
 
 %% API exports
 -export([init/0,
-         lookup/1, lookup_tags/1,
+         lookup/1, lookup/2, lookup_tags/1,
          collections/0, metrics/1, namespaces/2, tags/3,
          expand/2,
          add/4, add/5, add/7,
@@ -37,9 +37,11 @@
 -type lqry() :: {in, collection(), [metric()]} |
                 {in, collection(), [metric()], where()}.
 
+-type group_by_field() :: binary().
+
 -export_type([bucket/0, collection/0, metric/0, key/0,
               glob_metric/0, tag_name/0, tag_value/0,
-              where/0, lqry/0]).
+              where/0, lqry/0, group_by_field/0]).
 
 -callback init() ->
     ok |
@@ -47,6 +49,10 @@
 
 -callback lookup(lqry()) ->
     {ok, [{bucket(), key()}]} |
+    {error, Error::term()}.
+
+-callback lookup(lqry(), [group_by_field()]) ->
+    {ok, [{bucket(), key(), [tag_value()]}]} |
     {error, Error::term()}.
 
 -callback lookup_tags(lqry()) ->
@@ -150,6 +156,21 @@ init() ->
 lookup(Query) ->
     Mod = idx_module(),
     Mod:lookup(Query).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Takes a lookup query and reutrns a list of all metric/bucket
+%% paris that metch the lookup criteria with the values for the
+%% provided group by fields (tags).
+%% @end
+%%--------------------------------------------------------------------
+
+-spec lookup(lqry(), [group_by_field()]) ->
+                    {ok, [{bucket(), key(), [group_by_field()]}]} |
+                    {error, Error::term()}.
+lookup(Query, GroupBy) ->
+    Mod = idx_module(),
+    Mod:lookup(Query, GroupBy).
 
 
 %%--------------------------------------------------------------------
