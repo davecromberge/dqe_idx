@@ -12,7 +12,7 @@
 %% API exports
 -export([init/0,
          lookup/1, lookup/2, lookup_tags/1,
-         collections/0, metrics/1, namespaces/2, tags/3,
+         collections/0, metrics/1, namespaces/2, tags/3, values/4,
          expand/2,
          add/4, add/5, add/7,
          delete/4, delete/5, delete/7]).
@@ -74,6 +74,11 @@
 -callback tags(Collection::collection(), Metric::metric(),
                Namespace::namespace()) ->
     {ok, [tag_name()]} |
+    {error, Error::term()}.
+
+-callback values(Collection::collection(), Metric::metric(),
+               Namespace::namespace(), Tag::tag_name()) ->
+    {ok, [tag_value()]} |
     {error, Error::term()}.
 
 -callback expand(bucket(), [glob_metric()]) ->
@@ -239,6 +244,20 @@ namespaces(Collection, Metric) ->
 tags(Collection, Metric, Namespace) ->
     Mod = idx_module(),
     Mod:tags(Collection, Metric, Namespace).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all the possible values for a tag
+%% @end
+%%--------------------------------------------------------------------
+
+-spec values(Collection::collection(), Metric::metric(),
+           Namesplace::namespace(), Tag::tag_name()) ->
+                  {ok, [tag_value()]} |
+                  {error, Error::term()}.
+values(Collection, Metric, Namespace, Tag) ->
+    Mod = idx_module(),
+    Mod:values(Collection, Metric, Namespace, Tag).
 
 %%--------------------------------------------------------------------
 %% @doc
