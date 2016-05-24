@@ -350,7 +350,7 @@ delete(Collection, Metric, Bucket, Key) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Deletes one or more Tag pairs from a Metric. This funciton can
+%% Deletes one or more tag pairs from a Metric. This funciton can
 %% call delete/6 multiple times or use a more optimized method. This
 %% MUST only be used with metric2.0 like metadata tags that do not
 %% change metric identity!
@@ -360,7 +360,7 @@ delete(Collection, Metric, Bucket, Key) ->
              Metric::metric(),
              Bucket::bucket(),
              Key::key(),
-             Tags::[{namespace(), tag_name(), tag_value()}]) ->
+             Tags::[{namespace(), tag_name()}]) ->
                     ok |
                     {error, Error::term()}.
 
