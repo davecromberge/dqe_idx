@@ -14,8 +14,8 @@
          lookup/1, lookup/2, lookup_tags/1,
          collections/0, metrics/1, namespaces/2, tags/3, values/4,
          expand/2,
-         add/4, add/5, add/7,
-         delete/4, delete/5, delete/7]).
+         add/4, add/5, update/5,
+         delete/4, delete/5]).
 
 -type bucket() :: binary().
 -type collection() :: binary().
@@ -77,7 +77,7 @@
     {error, Error::term()}.
 
 -callback values(Collection::collection(), Metric::metric(),
-               Namespace::namespace(), Tag::tag_name()) ->
+                 Namespace::namespace(), Tag::tag_name()) ->
     {ok, [tag_value()]} |
     {error, Error::term()}.
 
@@ -89,7 +89,7 @@
               Metric::metric(),
               Bucket::bucket(),
               Key::key()) ->
-    {ok, MetricIdx::term()}|
+    {ok, MetricIdx::term()} | ok |
     {error, Error::term()}.
 
 -callback add(Collection::collection(),
@@ -97,17 +97,15 @@
               Bucket::bucket(),
               Key::key(),
               Tags::[{namespace(), tag_name(), tag_value()}]) ->
-    {ok, MetricIdx::term()}|
+    {ok, MetricIdx::term()} | ok |
     {error, Error::term()}.
 
--callback add(Collection::collection(),
-              Metric::metric(),
-              Bucket::bucket(),
-              Key::key(),
-              Namespace::namespace(),
-              TagName::tag_name(),
-              TagValue::tag_value()) ->
-    {ok, MetricIdx::term()}|
+-callback update(Collection::collection(),
+                 Metric::metric(),
+                 Bucket::bucket(),
+                 Key::key(),
+                 Tags::[{namespace(), tag_name(), tag_value()}]) ->
+    {ok, MetricIdx::term()} | ok |
     {error, Error::term()}.
 
 -callback delete(Collection::collection(),
@@ -121,15 +119,6 @@
                  Bucket::bucket(),
                  Key::key(),
                  Tags::[{namespace(), tag_name(), tag_value()}]) ->
-    ok | {error, Error::term()}.
-
--callback delete(Collection::collection(),
-                 Metric::metric(),
-                 Bucket::bucket(),
-                 Key::key(),
-                 Namespace::namespace(),
-                 TagName::tag_name(),
-                 TagValue::tag_value()) ->
     ok | {error, Error::term()}.
 
 %%====================================================================
@@ -212,8 +201,8 @@ collections() ->
 %%--------------------------------------------------------------------
 
 -spec metrics(Collection::collection()) ->
-                         {ok, [metric()]} |
-                         {error, Error::term()}.
+                     {ok, [metric()]} |
+                     {error, Error::term()}.
 metrics(Collection) ->
     Mod = idx_module(),
     Mod:metrics(Collection).
@@ -225,8 +214,8 @@ metrics(Collection) ->
 %%--------------------------------------------------------------------
 
 -spec namespaces(Collection::collection(), Metric::metric()) ->
-                         {ok, [namespace()]} |
-                         {error, Error::term()}.
+                        {ok, [namespace()]} |
+                        {error, Error::term()}.
 namespaces(Collection, Metric) ->
     Mod = idx_module(),
     Mod:namespaces(Collection, Metric).
@@ -252,9 +241,9 @@ tags(Collection, Metric, Namespace) ->
 %%--------------------------------------------------------------------
 
 -spec values(Collection::collection(), Metric::metric(),
-           Namesplace::namespace(), Tag::tag_name()) ->
-                  {ok, [tag_value()]} |
-                  {error, Error::term()}.
+             Namesplace::namespace(), Tag::tag_name()) ->
+                    {ok, [tag_value()]} |
+                    {error, Error::term()}.
 values(Collection, Metric, Namespace, Tag) ->
     Mod = idx_module(),
     Mod:values(Collection, Metric, Namespace, Tag).
@@ -276,7 +265,12 @@ expand(B, Gs) ->
 %%--------------------------------------------------------------------
 %% @doc
 %% Links a collection/metric to a bucket and key. Returns whatever
-%% identifyer the colleciton/metric has if any.
+%% identifyer the colleciton/metric has if any. This MAY either return
+%% {ok, ID} or optinally ok, if ok is returned it MUST only be done
+%% if the metric was already present in the index store. Returning
+%% {ok, ID} is ALWAYS acceptable. A consumer of this API MAY assume
+%% that if ok is returned the related tags are already in the store
+%% as well.
 %% @end
 %%--------------------------------------------------------------------
 
@@ -285,6 +279,7 @@ expand(B, Gs) ->
           Bucket::bucket(),
           Key::key()) ->
                  {ok, MetricIdx::term()} |
+                 ok |
                  {error, Error::term()}.
 
 add(Collection, Metric, Bucket, Key) ->
@@ -293,8 +288,10 @@ add(Collection, Metric, Bucket, Key) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Adds one or more metrics tag pairs to a metric. This function
-%% might call add/6 repeatively or use a more optimized method.
+%% Adds one or more metrics tag pairs to a metric. This
+%% function MUST not change existing tags, or add tags to an existing
+%% metric IF add/4 returned ok. It MAY add additional tags if add/4
+%% returned {ok, ID} despite the metric being present.
 %% @end
 %%--------------------------------------------------------------------
 
@@ -304,6 +301,7 @@ add(Collection, Metric, Bucket, Key) ->
           Key::key(),
           Tags::[{namespace(), tag_name(), tag_value()}]) ->
                  {ok, MetricIdx::term()} |
+                 ok |
                  {error, Error::term()}.
 
 add(Collection, Metric, Bucket, Key, Tags) ->
@@ -312,23 +310,26 @@ add(Collection, Metric, Bucket, Key, Tags) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Adds a tag pair to a metrics.
+%% Updates values of a metric, this behaves equivalent to add/5 if
+%% the metric was not yet known to the index store, if however it was
+%% known it MUST add new tags and MUST update existing tags. This is
+%% meant to be used with metadata tags as described in the metrics2.0
+%% specification.
 %% @end
 %%--------------------------------------------------------------------
 
--spec add(Collection::collection(),
-          Metric::metric(),
-          Bucket::bucket(),
-          Key::key(),
-          Namespace::namespace(),
-          TagName::tag_name(),
-          TagValue::tag_value()) ->
-                 {ok, MetricIdx::term()} |
-                 {error, Error::term()}.
+-spec update(Collection::collection(),
+             Metric::metric(),
+             Bucket::bucket(),
+             Key::key(),
+             Tags::[{namespace(), tag_name(), tag_value()}]) ->
+                    {ok, MetricIdx::term()} |
+                    ok |
+                    {error, Error::term()}.
 
-add(Collection, Metric, Bucket, Key, Namespace, TagName, TagValue) ->
+update(Collection, Metric, Bucket, Key, Tags) ->
     Mod = idx_module(),
-    Mod:add(Collection, Metric, Bucket, Key, Namespace, TagName, TagValue).
+    Mod:update(Collection, Metric, Bucket, Key, Tags).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -350,7 +351,9 @@ delete(Collection, Metric, Bucket, Key) ->
 %%--------------------------------------------------------------------
 %% @doc
 %% Deletes one or more Tag pairs from a Metric. This funciton can
-%% call delete/6 multiple times or use a more optimized method.
+%% call delete/6 multiple times or use a more optimized method. This
+%% MUST only be used with metric2.0 like metadata tags that do not
+%% change metric identity!
 %% @end
 %%--------------------------------------------------------------------
 -spec delete(Collection::collection(),
@@ -364,26 +367,6 @@ delete(Collection, Metric, Bucket, Key) ->
 delete(Collection, Metric, Bucket, Key, Tags) ->
     Mod = idx_module(),
     Mod:delete(Collection, Metric, Bucket, Key, Tags).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Deletes a Tag pairs from a Metric.
-%% @end
-%%--------------------------------------------------------------------
-
--spec delete(Collection::collection(),
-             Metric::metric(),
-             Bucket::bucket(),
-             Key::key(),
-             Namespace::namespace(),
-             TagName::tag_name(),
-             TagValue::tag_value()) ->
-                    ok |
-                    {error, Error::term()}.
-
-delete(Collection, Metric, Bucket, Key, Namespace, TagName, TagValue) ->
-    Mod = idx_module(),
-    Mod:delete(Collection, Metric, Bucket, Key, Namespace, TagName, TagValue).
 
 %%====================================================================
 %% Internal functions
