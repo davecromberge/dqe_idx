@@ -12,8 +12,8 @@
 %% API exports
 -export([init/0,
          lookup/1, lookup/2, lookup_tags/1,
-         collections/0, metrics/1, namespaces/2, tags/3, values/4,
-         expand/2,
+         collections/0, metrics/1, namespaces/1, namespaces/2,
+         tags/2, tags/3, values/3, values/4, expand/2,
          add/4, add/5, update/5,
          delete/4, delete/5]).
 
@@ -67,13 +67,26 @@
     {ok, [metric()]} |
     {error, Error::term()}.
 
+-callback namespaces(Collection::collection()) ->
+    {ok, [namespace()]} |
+    {error, Error::term()}.
+
 -callback namespaces(Collection::collection(), Metric::metric()) ->
     {ok, [namespace()]} |
+    {error, Error::term()}.
+
+-callback tags(Collection::collection(), Namespace::namespace()) ->
+    {ok, [tag_name()]} |
     {error, Error::term()}.
 
 -callback tags(Collection::collection(), Metric::metric(),
                Namespace::namespace()) ->
     {ok, [tag_name()]} |
+    {error, Error::term()}.
+
+-callback values(Collection::collection(), Namespace::namespace(),
+                 Tag::tag_name()) ->
+    {ok, [tag_value()]} |
     {error, Error::term()}.
 
 -callback values(Collection::collection(), Metric::metric(),
@@ -209,6 +222,19 @@ metrics(Collection) ->
 
 %%--------------------------------------------------------------------
 %% @doc
+%% Lists all namespaces in a collection, across all metrics.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec namespaces(Collection::collection()) ->
+                        {ok, [namespace()]} |
+                        {error, Error::term()}.
+namespaces(Collection) ->
+    Mod = idx_module(),
+    Mod:namespaces(Collection).
+
+%%--------------------------------------------------------------------
+%% @doc
 %% Lists all namespaces for a metrics.
 %% @end
 %%--------------------------------------------------------------------
@@ -219,6 +245,19 @@ metrics(Collection) ->
 namespaces(Collection, Metric) ->
     Mod = idx_module(),
     Mod:namespaces(Collection, Metric).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all tags for a namespaces across all metrics in a collection.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec tags(Collection::collection(), Namesplace::namespace()) ->
+                  {ok, [tag_name()]} |
+                  {error, Error::term()}.
+tags(Collection, Namespace) ->
+    Mod = idx_module(),
+    Mod:tags(Collection, Namespace).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -233,6 +272,21 @@ namespaces(Collection, Metric) ->
 tags(Collection, Metric, Namespace) ->
     Mod = idx_module(),
     Mod:tags(Collection, Metric, Namespace).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all the possible values for a tag across all metrics in a
+%% collection
+%% @end
+%%--------------------------------------------------------------------
+
+-spec values(Collection::collection(), Metric::metric(),
+             Tag::tag_name()) ->
+                    {ok, [tag_value()]} |
+                    {error, Error::term()}.
+values(Collection, Namespace, Tag) ->
+    Mod = idx_module(),
+    Mod:values(Collection, Namespace, Tag).
 
 %%--------------------------------------------------------------------
 %% @doc
