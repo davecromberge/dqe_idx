@@ -1,6 +1,8 @@
 dqe_idx
 =====
 
+[![Hex.pm](https://img.shields.io/hexpm/v/dqe_idx.svg?maxAge=2592000)](https://hex.pm/packages/dqe_idx)
+
 Dalmatiner query engine indexer abstract module.
 
 This application forwards indexer calls to configured
