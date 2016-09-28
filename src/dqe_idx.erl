@@ -29,13 +29,14 @@
 -type tags() :: [{Namespace::namespace(), TagName::tag_name(),
                   Value::tag_value()}].
 
+-type opt_metric() :: [metric()] | undefined.
 
 -type where() :: {'=',  tag(), tag_value()} |
                  {'and', where(), where()} |
                  {'or', where(), where()}.
 
--type lqry() :: {in, collection(), [metric()]} |
-                {in, collection(), [metric()], where()}.
+-type lqry() :: {in, collection(), opt_metric()} |
+                {in, collection(), opt_metric(), where()}.
 
 -type group_by_field() :: binary().
 
