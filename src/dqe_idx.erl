@@ -13,7 +13,7 @@
 -export([init/0,
          lookup/1, lookup/2, lookup_tags/1,
          collections/0, metrics/1, namespaces/1, namespaces/2,
-         tags/2, tags/3, values/3, values/4, expand/2,
+         tags/2, tags/3, values/3, values/4, expand/2, metric_variants/2,
          add/4, add/5, update/5,
          delete/4, delete/5]).
 
@@ -95,8 +95,12 @@
     {ok, [tag_value()]} |
     {error, Error::term()}.
 
--callback expand(bucket(), [glob_metric()]) ->
+-callback expand(Bucket::bucket(), [glob_metric()]) ->
     {ok, {bucket(), [metric()]}} |
+    {error, Error::term()}.
+
+-callback metric_variants(Collection::collection(), Prefix::[metric()]) ->
+    {ok, [Metric::metric()]} |
     {error, Error::term()}.
 
 -callback add(Collection::collection(),
@@ -316,6 +320,24 @@ values(Collection, Metric, Namespace, Tag) ->
 expand(B, Gs) ->
     Mod = idx_module(),
     Mod:expand(B, Gs).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Returns a list of metric path suffixes of depth one that are prefixed
+%% by the given probe `Prefix', which can also be empty.
+%%
+%% For example:
+%% metric_variants(<<"collection">>, []) -> [<<"base">>].
+%% metric_variants(<<"collection">>, [<<"base">>]) -> [<<"cpu">>, <<"disk">>].
+%% @end
+%%--------------------------------------------------------------------
+
+-spec metric_variants(Collection::collection(), Prefix::[metric()]) ->
+                    {ok, [Metric::metric()]} |
+                    {error, Error::term()}.
+metric_variants(Collection, Prefix) ->
+    Mod = idx_module(),
+    Mod:metric_variants(Collection, Prefix).
 
 %%--------------------------------------------------------------------
 %% @doc
